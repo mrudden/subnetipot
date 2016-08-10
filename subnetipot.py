@@ -6,13 +6,14 @@
 
 # Purpose: group subnets into larger subnets, take parameter like /24 or /16, then process a list and produce all the specific bigger subnets that the smaller ones are contained in.
 
+
 import argparse
 import csv
-# Deprecated:
-# import sys
 import ipaddress
 
+
 print("\n~~~~~~~~~~~~~~~~~~~~~~~~~\n  Welcome to SubnetiPot \n\n ~irrigate your subnets~\n~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
 
 # Test data
 test_subnet_list = [
@@ -141,30 +142,19 @@ else:
 if args.filename:
   file_to_open = args.filename
   print("Filename: " + args.filename)
-  #Test this!
+  # Open the CSV list, read it and process it into the list
   list_of_subnets = import_list(file_to_open)
 else:
   print("Filename: Not specified, so test data will be used.")
   list_of_subnets = test_subnet_list
 
 
-
-
-
-
-
-
 #list_of_subnets = file_to_open
 list_of_supernets = []
 
-
-
-
-
-
-
+# This is where the output comes from! The Meat and Potatoes, so to speak.
 for subnet in list_of_subnets:
-# For testing
+# For testing:
 #  print(get_mask(subnet))
   if get_mask(subnet) >= cidr_netmask:
     supernet = supernetter(subnet, cidr_netmask)
@@ -175,11 +165,10 @@ for subnet in list_of_subnets:
     print("Mask requested is greater than " + str(subnet) + ". Skipping.")
 
 
-
 print("\n--------------------------------------\n Here are those ranges you requested! \n--------------------------------------\n")
 
 for bignet in list_of_supernets:
-# Bignets just like in Louisiana
+# Tasty bignets just like in Louisiana
   print(bignet)
 
 print("\n--------------------------------------\n      ~you can now breathe easy~ \n--------------------------------------\n")
