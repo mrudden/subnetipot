@@ -1,5 +1,5 @@
 # subnetipot.py
-# Subneti Pot
+# SubnetiPot
 # Developed on Python 3.5.2
 # Michael Rudden, 2016
 
@@ -7,12 +7,12 @@
 # Purpose: group subnets into larger subnets, take parameter like /24 or /16, then process a list and produce all the specific bigger subnets that the smaller ones are contained in.
 
 import argparse
-# Going to add ability to read from a CSV soon!
-#import csv
-import sys
+import csv
+# Deprecated:
+# import sys
 import ipaddress
 
-print("\n~~~~~~~~~~~~~~~~~~~~~~~~~\n  Welcome to SubnetiPot \n\n  -Michael Rudden 2016-\n\n ~irrigate your subnets~\n~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+print("\n~~~~~~~~~~~~~~~~~~~~~~~~~\n  Welcome to SubnetiPot \n\n ~irrigate your subnets~\n~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
 # Test data
 test_subnet_list = [
@@ -43,47 +43,33 @@ test_subnet_list = [
 test_range = "192.168.7.0-192.168.7.255"
 
 
-# Let's handle arguments better than before, using argparse!
-parser = argparse.ArgumentParser(description='Get bigger subnets that contain the ones being input')
-parser.add_argument("netmask", type=int, help="Set netmask, must be a number from 1-32")
-parser.add_argument("-f", "--filename", help="Specify CSV file to read. Data should be in column 1")
-parser.add_argument("-r", "--range", help="Set input type to range. Input must be in format \"#.#.#.#-#.#.#.#\"", action="store_true")
-args = parser.parse_args()
+def import_list(filename):
+  #open CSV, read column into list_of_subnets. break down range as needed and flagged.
+  imported_list = []
+  with open(filename, newline='') as csvfile:
+    csvreader = csv.reader(csvfile, delimiter= ' ', quotechar='|')
+    for row in csvreader:
+      print(row)
+      if args.range:
+        ip_address = rangesplitter(row[0])[0]
+      else:
+        ip_address = ipaddress.ip_network(row[0])
+      imported_list.append(ip_address)
+#      print(ip_address)
+  return imported_list
 
-
-
-# Let's store the inputs and print out some helpful to show us our parameters.
-try:
-  cidr_netmask = args.netmask
-  if cidr_netmask < 33:
-    print("Parameters\n----------")
-    print("Subnet Mask: " + str(cidr_netmask))
-  else:
-    raise
-except:
-  print("You need to put an argument after the script name.\nIt should be a number between 0 and 32.\n\nExample:\n>python subnetipot.py 16\n\nExiting.")
-  exit(0)
-
-if args.filename:
-  file_to_open = args.filename
-  print("Filename: " + args.filename)
-else:
-  print("Filename: Not specified, so test data will be used.")
-  file_to_open = test_subnet_list
-
-if args.range:
-  print("Mode: Range")
-else:
-  print("Mode: CIDR")
 
 # Split a range of IPs if that's the input given. *Beta!
 def rangesplitter(ip_range):
   split_range = ip_range.split('-')
+  #print(split_range)
   first_ip = ipaddress.IPv4Address(split_range[0])
   second_ip = ipaddress.IPv4Address(split_range[1])
-  return [ip for ip in ipaddress.summarize_address_range(first_ip, second_ip)]
+  #print(ipaddress.summarize_address_range(first_ip, second_ip))
+  return [ipaddr for ipaddr in ipaddress.summarize_address_range(first_ip, second_ip)]
 
 #print(rangesplitter(test_range))
+
 
 def supernetter(subnet, netmask):
   if netmask == 0: return subnet.supernet(new_prefix=0)
@@ -121,14 +107,64 @@ def supernetter(subnet, netmask):
   elif netmask == 32: return subnet.supernet(new_prefix=32)
   else: return "Error: Invalid netmask supplied."
 
+
 # Takes an ip_network value, like 10.10.0.0/16, converts it to a string and splits on the "/", returning just the mask.
 def get_mask(subnet):
   return int(str(subnet).split('/')[1])
 
-list_of_subnets = file_to_open
+
+# Let's handle arguments better than before, using argparse!
+parser = argparse.ArgumentParser(description='Get bigger subnets that contain the ones being input')
+parser.add_argument("netmask", type=int, help="Set netmask, must be a number from 1-32")
+parser.add_argument("-f", "--filename", help="Specify CSV file to read. Data should be in column 1")
+parser.add_argument("-r", "--range", help="Set input type to range. Input must be in format \"#.#.#.#-#.#.#.#\"", action="store_true")
+args = parser.parse_args()
+
+
+# Let's store the inputs and print out some helpful to show us our parameters.
+try:
+  cidr_netmask = args.netmask
+  if cidr_netmask < 33:
+    print("Parameters\n----------")
+    print("Subnet Mask: " + str(cidr_netmask))
+  else:
+    raise
+except:
+  print("You need to put an argument after the script name.\nIt should be a number between 0 and 32.\n\nExample:\n>python subnetipot.py 16\n\nExiting.")
+  exit(0)
+
+if args.range:
+  print("Mode: Range")
+else:
+  print("Mode: CIDR")
+
+if args.filename:
+  file_to_open = args.filename
+  print("Filename: " + args.filename)
+  #Test this!
+  list_of_subnets = import_list(file_to_open)
+else:
+  print("Filename: Not specified, so test data will be used.")
+  list_of_subnets = test_subnet_list
+
+
+
+
+
+
+
+
+#list_of_subnets = file_to_open
 list_of_supernets = []
 
+
+
+
+
+
+
 for subnet in list_of_subnets:
+# For testing
 #  print(get_mask(subnet))
   if get_mask(subnet) >= cidr_netmask:
     supernet = supernetter(subnet, cidr_netmask)
@@ -145,3 +181,5 @@ print("\n--------------------------------------\n Here are those ranges you requ
 for bignet in list_of_supernets:
 # Bignets just like in Louisiana
   print(bignet)
+
+print("\n--------------------------------------\n      ~you can now breathe easy~ \n--------------------------------------\n")
